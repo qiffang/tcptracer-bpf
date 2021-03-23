@@ -39,6 +39,24 @@ func tcpV4ToGo(data []byte) (ret TcpV4) {
 	return
 }
 
+func trafficeV4ToGo(data []byte) (ret IpV4Key) {
+	eventC := (*C.struct_ipv4_key_t)(unsafe.Pointer(&data[0]))
+
+	ret.Pid  = uint32(eventC.pid & 0xffffffff)
+	saddrbuf := make([]byte, 4)
+	daddrbuf := make([]byte, 4)
+
+	ret.Type = EventType(eventC._type)
+	ret.CPU = uint64(eventC.cpu)
+	binary.LittleEndian.PutUint32(saddrbuf, uint32(eventC.saddr))
+	binary.LittleEndian.PutUint32(daddrbuf, uint32(eventC.daddr))
+
+	ret.SAddr = net.IPv4(saddrbuf[0], saddrbuf[1], saddrbuf[2], saddrbuf[3])
+	ret.DAddr = net.IPv4(daddrbuf[0], daddrbuf[1], daddrbuf[2], daddrbuf[3])
+	ret.SPort = uint16(eventC.sport)
+	ret.DPort = uint16(eventC.dport)
+}
+
 // Offset added to all timestamps, to hold back events so they are less
 // likely to be reported out of order. Value is in nanoseconds.
 var (
@@ -46,6 +64,11 @@ var (
 )
 
 func tcpV4Timestamp(data *[]byte) uint64 {
+	eventC := (*C.struct_ipv4_key_t)(unsafe.Pointer(&(*data)[0]))
+	return uint64(eventC.timestamp) + TimestampOffset
+}
+
+func tcpTrafficeV4Timestamp(data *[]byte) uint64 {
 	eventC := (*C.struct_tcp_ipv4_event_t)(unsafe.Pointer(&(*data)[0]))
 	return uint64(eventC.timestamp) + TimestampOffset
 }

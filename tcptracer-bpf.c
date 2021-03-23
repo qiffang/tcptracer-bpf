@@ -31,6 +31,15 @@ struct bpf_map_def SEC("maps/tcp_event_ipv4") tcp_event_ipv4 = {
 	.namespace = "",
 };
 
+struct bpf_map_def SEC("maps/tcp_traffic_ipv4") tcp_traffic_ipv4 = {
+    .type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+    .key_size = sizeof(int),
+    .value_size = sizeof(__u32),
+    .max_entries = 1024,
+    .pinning = 0,
+    .namespace = "",
+};
+
 /* This is a key/value store with the keys being the cpu number
  * and the values being a perf file descriptor.
  */
@@ -80,6 +89,13 @@ struct bpf_map_def SEC("maps/tuplepid_ipv4") tuplepid_ipv4 = {
 	.pinning = 0,
 	.namespace = "",
 };
+
+//struct bpf_map_def SEC("maps/tuple_network_ipv4") tuple_network_ipv4 = {
+//    .type = BPF_MAP_TYPE_HASH,
+//    .key_size = sizeof(struct ipv4_tuple_t),
+//    .
+//
+//}
 
 /* This is a key/value store with the keys being an ipv6_tuple_t
  * and the values being a struct pid_comm_t.
@@ -902,6 +918,59 @@ int kretprobe__fd_install(struct pt_regs *ctx)
 	bpf_perf_event_output(ctx, &tcp_event_ipv4, cpu, &evt, sizeof(evt));
 
 	return 0;
+}
+
+SEC("kprobe/tcp_sendmsg")
+int kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk,
+    struct msghdr *msg, size_t size)
+{
+     __u32 pid = bpf_get_current_pid_tgid() >> 32;
+     u16 family = sk->__sk_common.skc_family;
+     if (family == AF_INET) {
+         u32 cpu = bpf_get_smp_processor_id();
+         struct ipv4_key_t ipv4_key = {.pid = pid};
+
+         ipv4_key.saddr = sk->__sk_common.skc_rcv_saddr;
+         ipv4_key.daddr = sk->__sk_common.skc_daddr;
+         ipv4_key.lport = sk->__sk_common.skc_num;
+         u16 dport = sk->__sk_common.skc_dport;
+         ipv4_key.dport = ntohs(dport);
+         ipv4_key.type = TCP_EVENT_TYPE_SEND;
+
+         ipv4_key.size = ipv4_key.size + size;
+
+         bpf_perf_event_output(ctx, &tcp_event_ipv4, cpu, &ipv4_key, sizeof(ipv4_key));
+     }
+//     else if (family == AF_INET6) {
+//         struct ipv6_key_t ipv6_key = {.pid = pid};
+//         bpf_probe_read_kernel(&ipv6_key.saddr, sizeof(ipv6_key.saddr),
+//             &sk->__sk_common.skc_v6_rcv_saddr.in6_u.u6_addr32);
+//         bpf_probe_read_kernel(&ipv6_key.daddr, sizeof(ipv6_key.daddr),
+//             &sk->__sk_common.skc_v6_daddr.in6_u.u6_addr32);
+//         ipv6_key.lport = sk->__sk_common.skc_num;
+//         dport = sk->__sk_common.skc_dport;
+//         ipv6_key.dport = ntohs(dport);
+//         ipv6_key.type = TCP_EVENT_TYPE_SEND;
+//         ipv6_key.size = ipv6_key.size + size;
+//
+//          bpf_perf_event_output(ctx, &tcp_event_ipv4, cpu, &ipv6_key, sizeof(ipv6_key));
+//     }
+
+//    u32 pid = bpf_get_current_pid_tgid() >> 32;
+//    FILTER_PID
+//
+//    u16 dport = 0, family = sk->__sk_common.skc_family;
+//
+//    if (family == AF_INET) {
+//        struct ipv4_key_t ipv4_key = {.pid = pid};
+//        ipv4_send_bytes.increment(ipv4_key, size);
+//        ipv4_key.saddr = sk->__sk_common.skc_rcv_saddr;
+//        ipv4_key.daddr = sk->__sk_common.skc_daddr;
+//        ipv4_key.lport = sk->__sk_common.skc_num;
+//        dport = sk->__sk_common.skc_dport;
+//        ipv4_key.dport = ntohs(dport);
+//    }
+    return 0;
 }
 
 char _license[] SEC("license") = "GPL";

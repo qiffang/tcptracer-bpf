@@ -3,12 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/weaveworks/tcptracer-bpf/pkg/tracer"
+
+	//"github.com/weaveworks/tcptracer-bpf/pkg/tracer"
 	"os"
 	"os/signal"
 	"strconv"
 	"strings"
 
-	"github.com/weaveworks/tcptracer-bpf/pkg/tracer"
+	//"github.com/weaveworks/tcptracer-bpf/pkg/tracer"
 )
 
 const (
@@ -62,6 +65,17 @@ func (t *tcpEventTracer) LostV4(count uint64) {
 }
 
 func (t *tcpEventTracer) LostV6(count uint64) {
+	fmt.Printf("ERROR: lost %d events!\n", count)
+	os.Exit(TCP_EVENTS_LOST)
+}
+
+func (t *tcpEventTracer) TrafficV4(e tracer.IpV4Key) {
+	fmt.Printf("%v %v %v %v %v %v\n",
+		e.SAddr, e.SPort, e.DAddr, e.DPort, e.Pid, e.Size)
+	os.Exit(TCP_EVENTS_LOST)
+}
+
+func (t *tcpEventTracer) LostTrafficV4(count uint64) {
 	fmt.Printf("ERROR: lost %d events!\n", count)
 	os.Exit(TCP_EVENTS_LOST)
 }

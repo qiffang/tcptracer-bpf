@@ -7,6 +7,7 @@
 #define TCP_EVENT_TYPE_ACCEPT           2
 #define TCP_EVENT_TYPE_CLOSE            3
 #define TCP_EVENT_TYPE_FD_INSTALL       4
+#define TCP_EVENT_TYPE_SEND             5
 
 #define GUESS_SADDR      0
 #define GUESS_DADDR      1
@@ -33,6 +34,29 @@ struct tcp_ipv4_event_t {
 	__u32 netns;
 	__u32 fd;
 	__u32 dummy;
+};
+
+struct ipv4_key_t {
+    __u64 cpu;
+    __u32 type;
+    __u32 pid;
+    __u32 saddr;
+    __u32 daddr;
+    __u16 lport;
+    __u16 dport;
+    __u64 size;
+
+};
+
+struct ipv6_key_t {
+    __u32 type;
+    unsigned __int128 saddr;
+    unsigned __int128 daddr;
+    __u32 pid;
+    __u16 lport;
+    __u16 dport;
+    __u64 __pad__;
+    __u64 size;
 };
 
 struct tcp_ipv6_event_t {

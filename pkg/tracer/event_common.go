@@ -12,6 +12,7 @@ const (
 	EventAccept              = 2
 	EventClose               = 3
 	EventFdInstall           = 4
+	EventSend
 )
 
 func (e EventType) String() string {
@@ -57,4 +58,15 @@ type TcpV6 struct {
 	DPort     uint16    // Remote TCP port
 	NetNS     uint32    // Network namespace ID (as in /proc/$pid/ns/net)
 	Fd        uint32    // File descriptor for fd_install events
+}
+
+type IpV4Key struct {
+	Pid       uint32    // Process ID, who triggered the event
+	Type      EventType // connect, accept or close
+	CPU       uint64    // CPU index
+	SAddr     net.IP    // Local IP address
+	DAddr     net.IP    // Remote IP address
+	SPort     uint16    // Local TCP port
+	DPort     uint16    // Remote TCP port
+	Size      uint64
 }

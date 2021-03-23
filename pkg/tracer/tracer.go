@@ -14,6 +14,7 @@ type Tracer struct {
 	m           *bpflib.Module
 	perfMapIPV4 *bpflib.PerfMap
 	perfMapIPV6 *bpflib.PerfMap
+	perfMapTrafficV4 *bpflib.PerfMap
 	stopChan    chan struct{}
 }
 
@@ -60,6 +61,9 @@ func NewTracer(cb Callback) (*Tracer, error) {
 	lostChanV4 := make(chan uint64)
 	lostChanV6 := make(chan uint64)
 
+	channelTrafficV4 := make(chan []byte)
+	lostChanTrafficV4 := make(chan uint64)
+
 	perfMapIPV4, err := initializeIPv4(m, channelV4, lostChanV4)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init perf map for IPv4 events: %s", err)
@@ -70,8 +74,15 @@ func NewTracer(cb Callback) (*Tracer, error) {
 		return nil, fmt.Errorf("failed to init perf map for IPv6 events: %s", err)
 	}
 
+	perfMapTrafficV4, err := initializeTrafficIPv4(m, channelTrafficV4, lostChanTrafficV4)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init perf map for IPv4 Traffic events: %s", err)
+	}
+
 	perfMapIPV4.SetTimestampFunc(tcpV4Timestamp)
 	perfMapIPV6.SetTimestampFunc(tcpV6Timestamp)
+	//perfMapTrafficeV4.SetTimestampFunc()
+
 
 	stopChan := make(chan struct{})
 
@@ -116,10 +127,30 @@ func NewTracer(cb Callback) (*Tracer, error) {
 		}
 	}()
 
+	go func() {
+		for {
+			select {
+			case <-stopChan:
+				return
+			case data, ok := <- channelTrafficV4:
+				if !ok {
+					return // see explanation above
+				}
+				cb.TrafficV4(trafficeV4ToGo(data))
+			case lost, ok := <-lostChanTrafficV4:
+				if !ok {
+					return // see explanation above
+				}
+				cb.LostTrafficV4(lost)
+			}
+		}
+	}()
+
 	return &Tracer{
 		m:           m,
 		perfMapIPV4: perfMapIPV4,
 		perfMapIPV6: perfMapIPV6,
+		perfMapTrafficV4: perfMapTrafficV4,
 		stopChan:    stopChan,
 	}, nil
 }
@@ -127,6 +158,7 @@ func NewTracer(cb Callback) (*Tracer, error) {
 func (t *Tracer) Start() {
 	t.perfMapIPV4.PollStart()
 	t.perfMapIPV6.PollStart()
+	t.perfMapTrafficV4.PollStart()
 }
 
 func (t *Tracer) AddFdInstallWatcher(pid uint32) (err error) {
@@ -146,6 +178,7 @@ func (t *Tracer) Stop() {
 	close(t.stopChan)
 	t.perfMapIPV4.PollStop()
 	t.perfMapIPV6.PollStop()
+	t.perfMapTrafficV4.PollStop()
 	t.m.Close()
 }
 
@@ -169,4 +202,8 @@ func initializeIPv4(module *bpflib.Module, eventChan chan []byte, lostChan chan 
 
 func initializeIPv6(module *bpflib.Module, eventChan chan []byte, lostChan chan uint64) (*bpflib.PerfMap, error) {
 	return initialize(module, "tcp_event_ipv6", eventChan, lostChan)
+}
+
+func initializeTrafficIPv4(module *bpflib.Module, eventChan chan []byte, lostChan chan uint64) (*bpflib.PerfMap, error) {
+	return initialize(module, "tcp_traffic_ipv4", eventChan, lostChan)
 }
