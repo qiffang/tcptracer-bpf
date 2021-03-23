@@ -932,7 +932,7 @@ int kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk,
 
          ipv4_key.saddr = sk->__sk_common.skc_rcv_saddr;
          ipv4_key.daddr = sk->__sk_common.skc_daddr;
-         ipv4_key.lport = sk->__sk_common.skc_num;
+         ipv4_key.sport = sk->__sk_common.skc_num;
          u16 dport = sk->__sk_common.skc_dport;
          ipv4_key.dport = ntohs(dport);
          ipv4_key.type = TCP_EVENT_TYPE_SEND;

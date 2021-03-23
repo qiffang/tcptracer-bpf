@@ -42,7 +42,7 @@ struct ipv4_key_t {
     __u32 pid;
     __u32 saddr;
     __u32 daddr;
-    __u16 lport;
+    __u16 sport;
     __u16 dport;
     __u64 size;
 
