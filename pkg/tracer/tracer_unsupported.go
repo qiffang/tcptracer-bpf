@@ -25,3 +25,7 @@ func (t *Tracer) RemoveFdInstallWatcher(pid uint32) (err error) {
 }
 func (t *Tracer) Stop() {
 }
+
+func (t *Tracer) Test() {
+}
+

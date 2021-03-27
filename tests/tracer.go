@@ -98,6 +98,8 @@ func main() {
 		os.Exit(TRACER_INSERT_FAILED)
 	}
 
+	t.Test()
+
 	t.Start()
 
 	for _, p := range strings.Split(watchFdInstallPids, ",") {

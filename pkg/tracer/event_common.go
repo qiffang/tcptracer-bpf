@@ -12,7 +12,7 @@ const (
 	EventAccept              = 2
 	EventClose               = 3
 	EventFdInstall           = 4
-	EventSend
+	//EventSend
 )
 
 func (e EventType) String() string {
