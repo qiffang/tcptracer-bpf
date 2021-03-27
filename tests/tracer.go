@@ -98,7 +98,14 @@ func main() {
 		os.Exit(TRACER_INSERT_FAILED)
 	}
 
-	t.Test()
+	go func() {
+
+		fmt.Println("test start")
+		t.Test()
+
+		fmt.Println("test end")
+	}()
+
 
 	t.Start()
 
