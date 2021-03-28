@@ -63,8 +63,8 @@ func NewTracer(cb Callback) (*Tracer, error) {
 	lostChanV4 := make(chan uint64)
 	lostChanV6 := make(chan uint64)
 
-	channelTrafficV4 := make(chan []byte)
-	lostChanTrafficV4 := make(chan uint64)
+	//channelTrafficV4 := make(chan []byte)
+	//lostChanTrafficV4 := make(chan uint64)
 
 	perfMapIPV4, err := initializeIPv4(m, channelV4, lostChanV4)
 	if err != nil {
@@ -129,24 +129,24 @@ func NewTracer(cb Callback) (*Tracer, error) {
 		}
 	}()
 
-	go func() {
-		for {
-			select {
-			case <-stopChan:
-				return
-			case data, ok := <- channelTrafficV4:
-				if !ok {
-					return // see explanation above
-				}
-				cb.TrafficV4(trafficeV4ToGo(data))
-			case lost, ok := <-lostChanTrafficV4:
-				if !ok {
-					return // see explanation above
-				}
-				cb.LostTrafficV4(lost)
-			}
-		}
-	}()
+	//go func() {
+	//	for {
+	//		select {
+	//		case <-stopChan:
+	//			return
+	//		case data, ok := <- channelTrafficV4:
+	//			if !ok {
+	//				return // see explanation above
+	//			}
+	//			cb.TrafficV4(trafficeV4ToGo(data))
+	//		case lost, ok := <-lostChanTrafficV4:
+	//			if !ok {
+	//				return // see explanation above
+	//			}
+	//			cb.LostTrafficV4(lost)
+	//		}
+	//	}
+	//}()
 
 	return &Tracer{
 		m:           m,

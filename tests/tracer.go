@@ -69,6 +69,17 @@ func (t *tcpEventTracer) LostV6(count uint64) {
 	os.Exit(TCP_EVENTS_LOST)
 }
 
+//func (t *tcpEventTracer) TrafficV4(e tracer.IpV4Key) {
+//	fmt.Printf("%v %v %v %v %v %v\n",
+//		e.SAddr, e.SPort, e.DAddr, e.DPort, e.Pid, e.Size)
+//	os.Exit(TCP_EVENTS_LOST)
+//}
+//
+//func (t *tcpEventTracer) LostTrafficV4(count uint64) {
+//	fmt.Printf("ERROR: lost %d events!\n", count)
+//	os.Exit(TCP_EVENTS_LOST)
+//}
+
 func init() {
 	flag.StringVar(&watchFdInstallPids, "monitor-fdinstall-pids", "", "a comma-separated list of pids that need to be monitored for fdinstall events")
 
