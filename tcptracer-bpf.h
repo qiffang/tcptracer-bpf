@@ -38,7 +38,7 @@ struct tcp_ipv4_event_t {
 	__u32 dummy;
 };
 
-struct ipv4_key_t {
+struct tcp_traffic_event_t {
 	__u64 timestamp;
     __u64 cpu;
     __u32 type;

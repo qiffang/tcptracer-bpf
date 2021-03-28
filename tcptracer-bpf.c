@@ -945,25 +945,25 @@ int kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg
      u16 family = sk->__sk_common.skc_family;
      if (family == AF_INET) {
          u32 cpu = bpf_get_smp_processor_id();
-         struct ipv4_key_t ipv4_key = {.pid = pid};
+         struct tcp_traffic_event_t env = {.pid = pid};
 
-         ipv4_key.timestamp = bpf_ktime_get_ns();
-         ipv4_key.cpu = cpu;
+         env.timestamp = bpf_ktime_get_ns();
+         env.cpu = cpu;
 //         ipv4_send_bytes.increment(ipv4_key, size);
-         ipv4_key.saddr = sk->__sk_common.skc_rcv_saddr;
-         ipv4_key.daddr = sk->__sk_common.skc_daddr;
-         ipv4_key.sport = sk->__sk_common.skc_num;
+         env.saddr = sk->__sk_common.skc_rcv_saddr;
+         env.daddr = sk->__sk_common.skc_daddr;
+         env.sport = sk->__sk_common.skc_num;
          u16 dport = sk->__sk_common.skc_dport;
-         ipv4_key.dport = ntohs(dport);
-         ipv4_key.type = TCP_EVENT_TYPE_SEND;
+         env.dport = ntohs(dport);
+         env.type = TCP_EVENT_TYPE_SEND;
 
-          __u64 *counter = bpf_map_lookup_elem(&tcp_traffic_ipv4, &ipv4_key);
-          if (counter) {
-               *counter += size;
-          }
+//          __u64 *counter = bpf_map_lookup_elem(&tcp_traffic_ipv4, &ipv4_key);
+//          if (counter) {
+//               *counter += size;
+//          }
 
-          bpf_get_current_comm(&ipv4_key.comm, sizeof(ipv4_key.comm));
-          bpf_perf_event_output(ctx, &tcp_traffic_ipv4, cpu, &ipv4_key, sizeof(ipv4_key));
+          bpf_get_current_comm(&env.comm, sizeof(env.comm));
+          bpf_perf_event_output(ctx, &tcp_traffic_ipv4, cpu, &env, sizeof(env));
 
 //         u64 = bpf_map_lookup_elem(ipv4_key)
 
