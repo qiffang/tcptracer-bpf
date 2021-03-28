@@ -6,6 +6,6 @@ type Callback interface {
 	LostV4(uint64)
 	LostV6(uint64)
 
-	//TrafficV4(IpV4Key)
-	//LostTrafficV4(uint64)
+	TrafficV4(IpV4Key)
+	LostTrafficV4(uint64)
 }
