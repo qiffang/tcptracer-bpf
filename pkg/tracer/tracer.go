@@ -171,10 +171,6 @@ func (t *Tracer) AddFdInstallWatcher(pid uint32) (err error) {
 	return err
 }
 
-func (t *Tracer) Test() {
-	test()
-}
-
 func (t *Tracer) RemoveFdInstallWatcher(pid uint32) (err error) {
 	mapFdInstall := t.m.Map("fdinstall_pids")
 	err = t.m.DeleteElement(mapFdInstall, unsafe.Pointer(&pid))
