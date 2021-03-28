@@ -18,7 +18,7 @@
 #pragma clang diagnostic pop
 #include <net/inet_sock.h>
 #include <net/net_namespace.h>
-#include <uapi/linux/ptrace.h>
+//#include <uapi/linux/ptrace.h>
 //#include <bcc/proto.h>
 
 //typedef char strlenkey_t[80];
@@ -30,7 +30,7 @@
 struct bpf_map_def SEC("maps/tcp_event_ipv4") tcp_event_ipv4 = {
 	.type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
 	.key_size = sizeof(int),
-	.value_size = sizeof(void *),
+	.value_size = sizeof(__u32),
 	.max_entries = 1024,
 	.pinning = 0,
 	.namespace = "",
