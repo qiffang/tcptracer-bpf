@@ -1017,11 +1017,11 @@ int tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t
          env.timestamp = bpf_ktime_get_ns();
          env.cpu = cpu;
 //         ipv4_send_bytes.increment(ipv4_key, size);
-         env.saddr = sk->__sk_common.skc_rcv_saddr;
-         env.daddr = sk->__sk_common.skc_daddr;
-         env.sport = sk->__sk_common.skc_num;
-         u16 dport = sk->__sk_common.skc_dport;
-         env.dport = ntohs(dport);
+//         env.saddr = sk->__sk_common.skc_rcv_saddr;
+//         env.daddr = sk->__sk_common.skc_daddr;
+//         env.sport = sk->__sk_common.skc_num;
+//         u16 dport = sk->__sk_common.skc_dport;
+//         env.dport = ntohs(dport);
          env.type = TCP_EVENT_TYPE_SEND;
 
 //          __u64 *counter = bpf_map_lookup_elem(&tcp_traffic_ipv4, &ipv4_key);

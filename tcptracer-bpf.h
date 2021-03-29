@@ -44,10 +44,10 @@ struct tcp_traffic_event_t {
     __u32 type;
     __u32 pid;
     char comm[TASK_COMM_LEN];
-    __u32 saddr;
-    __u32 daddr;
-    __u16 sport;
-    __u16 dport;
+//    __u32 saddr;
+//    __u32 daddr;
+//    __u16 sport;
+//    __u16 dport;
 
 //    __u64 size;
 
