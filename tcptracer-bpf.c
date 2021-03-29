@@ -1005,8 +1005,8 @@ static inline int buf_write(buf_t *buf, void *ptr, int size) {
   return -1;
 }
 
-SEC("kprobe/tcp_sendmsg")
-int kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t size)
+SEC("kretprobe/tcp_sendmsg")
+int tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t size)
 {
      __u32 pid = bpf_get_current_pid_tgid() >> 32;
      u16 family = sk->__sk_common.skc_family;
@@ -1029,16 +1029,17 @@ int kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg
 //               *counter += size;
 //          }
 
-          buf_t *buf = get_buf();
-          if (buf == NULL) {
-            return 0;
-          }
-
-          buf_write(buf, (void *)&env, sizeof(env));
-          buf_perf_output(ctx);
+//          buf_t *buf = get_buf();
+//          if (buf == NULL) {
+//            return 0;
+//          }
+//
+//          buf_write(buf, (void *)&env, sizeof(env));
+//          buf_perf_output(ctx);
 
 //          bpf_get_current_comm(&env.comm, sizeof(env.comm));
-//          bpf_perf_event_output(ctx, &tcp_traffic_ipv4, cpu, &env, sizeof(env));
+          bpf_get_current_comm(&env.comm, sizeof(env.comm));
+          bpf_perf_event_output(ctx, &tcp_traffic_ipv4, cpu, &env, sizeof(env));
 
 //         u64 = bpf_map_lookup_elem(ipv4_key)
 
