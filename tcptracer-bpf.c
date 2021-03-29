@@ -45,6 +45,44 @@ struct bpf_map_def SEC("maps/tcp_traffic_ipv4") tcp_traffic_ipv4 = {
     .namespace = "",
 };
 
+
+//BPF_MAP_DEF(events) = {
+//    .map_type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+//    .max_entries = 1024,
+//};
+BPF_MAP_ADD(tcp_traffic_ipv4);
+
+//BPF_MAP_DEF(buffer) = {
+//    .map_type = BPF_MAP_TYPE_PERCPU_ARRAY,
+//    .key_size = sizeof(__u32),
+//    .value_size = BUFSIZE_PADDED,
+//    .max_entries = 1,
+//};
+struct bpf_map_def SEC("maps/buffer") buffer = {
+    .type = BPF_MAP_TYPE_PERCPU_ARRAY,
+    .key_size = sizeof(int),
+    .value_size = BUFSIZE_PADDED,
+    .max_entries = 1,
+    .pinning = 0,
+    .namespace = "",
+};
+BPF_MAP_ADD(buffer);
+
+//typedef struct buf {
+//  __u32 off;
+//  __u8 data[BUFSIZE_PADDED];
+//} buf_t;
+
+struct bpf_map_def SEC("maps/tcp_traffic_events") tcp_traffic_events = {
+    .type = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+    .key_size = sizeof(int),
+    .value_size = sizeof(__u32),
+    .max_entries = 1024,
+    .pinning = 0,
+    .namespace = "",
+};
+BPF_MAP_ADD(tcp_traffic_events);
+
 //BPF_MAP_DEF(protocols) = {
 //    .map_type = BPF_MAP_TYPE_PERCPU_ARRAY,
 //    .key_size = sizeof(__u32),
@@ -938,6 +976,35 @@ int kretprobe__fd_install(struct pt_regs *ctx)
 	return 0;
 }
 
+static inline buf_t *get_buf() {
+  __u32 key = 0;
+  return (buf_t *)bpf_map_lookup_elem(&buffer, &key);
+}
+
+static inline int buf_perf_output(struct pt_regs *ctx) {
+  buf_t *buf = get_buf();
+  if (buf == NULL) {
+    return -1;
+  }
+  int size = buf->off & BUFSIZE;
+  buf->off = 0;
+  return bpf_perf_event_output(ctx, &tcp_traffic_events, BPF_F_CURRENT_CPU,
+                               (void *)buf->data, size);
+}
+
+static inline int buf_write(buf_t *buf, void *ptr, int size) {
+  if (buf->off >= BUFSIZE) {
+    return 0;
+  }
+
+  if (bpf_probe_read(&(buf->data[buf->off]), size, ptr) == 0) {
+    buf->off += size;
+    return size;
+  }
+
+  return -1;
+}
+
 SEC("kprobe/tcp_sendmsg")
 int kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg, size_t size)
 {
@@ -962,8 +1029,16 @@ int kprobe__tcp_sendmsg(struct pt_regs *ctx, struct sock *sk, struct msghdr *msg
 //               *counter += size;
 //          }
 
-          bpf_get_current_comm(&env.comm, sizeof(env.comm));
-          bpf_perf_event_output(ctx, &tcp_traffic_ipv4, cpu, &env, sizeof(env));
+          buf_t *buf = get_buf();
+          if (buf == NULL) {
+            return 0;
+          }
+
+          buf_write(buf, (void *)&env, sizeof(env));
+          buf_perf_output(ctx);
+
+//          bpf_get_current_comm(&env.comm, sizeof(env.comm));
+//          bpf_perf_event_output(ctx, &tcp_traffic_ipv4, cpu, &env, sizeof(env));
 
 //         u64 = bpf_map_lookup_elem(ipv4_key)
 

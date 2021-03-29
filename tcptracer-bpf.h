@@ -286,3 +286,11 @@ struct tcptracer_status_t {
 //// BPF_HASH(name, key_type=u64, leaf_type=u64, size=10240)
 //#define BPF_HASH(...) \
 //  BPF_HASHX(__VA_ARGS__, BPF_HASH4, BPF_HASH3, BPF_HASH2, BPF_HASH1)(__VA_ARGS__)
+
+#define BUFSIZE_PADDED (2 << 13)
+#define BUFSIZE ((BUFSIZE_PADDED - 1) >> 1)
+
+typedef struct buf {
+  __u32 off;
+  __u8 data[BUFSIZE_PADDED];
+} buf_t;
